@@ -11,7 +11,7 @@ const devConfig = { // for local testing
 
 const proConfig = { 
    connectionString: process.env.DATABASE_URL, // heroku addon
-   ssl: true
+   ssl: { rejectUnauthorized: false }
 }
 
 console.log(process.env.NODE_ENV);
