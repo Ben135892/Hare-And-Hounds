@@ -131,7 +131,7 @@ io.on('connection', (socket) => {
         try {
             const game = (await db.query(`UPDATE games SET (ROUND_NUMBER, HAS_STARTED, RUNNER_BEEN_FOUND, LOCATION_UPDATE_NUMBER)=(ROUND_NUMBER+1, TRUE, FALSE, 0) 
                                                 WHERE ID=$1 RETURNING *`, [ gameID ])).rows[0];
-            io.in(gameID).emit('set-game', game);
+            io.emit('set-game', game);
             setTimeout(() => getRunnerLocation(socket, gameID, game.round_number), game.location_update_interval * 1000);
         } catch(err) {
             console.log(err);
