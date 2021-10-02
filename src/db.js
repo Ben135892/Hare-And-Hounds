@@ -10,12 +10,15 @@ const devConfig = { // for local testing
 }
 
 const proConfig = { 
-   connectionString: process.env.DATABASE_URL // heroku addon
+   connectionString: process.env.DATABASE_URL, // heroku addon
+   ssl: true
 }
 
+console.log(process.env.NODE_ENV);
 const pool = new Pool(
    process.env.NODE_ENV === 'production' ? proConfig : devConfig
 );
 
 module.exports = pool;
-// tutorial followed: https://www.youtube.com/watch?v=ZJxUOOND5_A
+// tutorial followed to deploy: https://www.youtube.com/watch?v=ZJxUOOND5_A
+// login to Heroku database in terminal: heroku pg:psql -a hareandhounds
