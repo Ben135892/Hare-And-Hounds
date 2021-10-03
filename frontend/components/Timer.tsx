@@ -18,7 +18,7 @@ const Timer: React.FC<Props> = ({ game, time }) => {
         return () => clearInterval(interval);
     }, [game.location_update_number]);
     return (
-        <Text>Updating Runner Location in { timer } seconds</Text>
+        <Text>{ timer }</Text>
     );
 }
 
