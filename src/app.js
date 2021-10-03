@@ -88,9 +88,9 @@ io.on('connection', (socket) => {
             const players = (await db.query(`INSERT INTO players (NAME, SOCKET_ID, IS_RUNNER, IS_HOSTING, GAME_ID) 
                                                 VALUES ($1, $2, TRUE, TRUE, $3) RETURNING *`, 
                                                 [ name, socket.id, gameID ])).rows;
+            socket.join(gameID);
             socket.emit('set-players', players);
             socket.emit('set-game', game);
-            socket.join('hey');
         } catch (err) {
             console.log(err);
         }
