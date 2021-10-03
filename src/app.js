@@ -8,7 +8,7 @@ const io = require('socket.io')(http);
 http.listen(port, () => console.log('listening on port ' + port));
 
 // in seconds
-const locationUpdateInterval = 60; 
+const locationUpdateInterval = 15; 
 const locationShowTime = 10; 
 
 const getRunnerLocation = async (socket, gameID, roundNumber) => {
@@ -21,11 +21,11 @@ const getRunnerLocation = async (socket, gameID, roundNumber) => {
         if (!game.has_started || game.runner_been_found || game.round_number !== roundNumber) {
             return;
         }
+        socket.broadcast.to(gameID).emit('set-runner-location', { latitude: game.runner_last_latitude, longitude: game.runner_last_longitude });
         game = (await db.query('UPDATE games SET LOCATION_UPDATE_NUMBER=LOCATION_UPDATE_NUMBER+1 WHERE ID=$1 RETURNING *', [ gameID ])).rows[0];
-        io.emit('set-game', game);
-        socket.broadcast.emit('set-runner-location', { latitude: game.runner_last_latitude, longitude: game.runner_last_longitude });
+        io.in(gameID).emit('set-game', game);
         setTimeout(() => getRunnerLocation(socket, gameID, roundNumber), game.location_update_interval * 1000);
-        setTimeout(() => io.emit('remove-runner-location'), game.location_show_time * 1000);
+        setTimeout(() => io.in(gameID).emit('remove-runner-location'), game.location_show_time * 1000);
     } catch(err) {
         console.log(err);
     }
@@ -52,27 +52,28 @@ const leaveGame = async (socket, player) => {
                 const newRunnerID = (await db.query('SELECT ID FROM players WHERE GAME_ID=$1 LIMIT 1', [ gameID ])).rows[0].id;
                 await db.query('UPDATE players SET IS_RUNNER=TRUE WHERE ID=$1', [ newRunnerID ]);
                 const game = (await db.query('UPDATE games SET HAS_STARTED=FALSE WHERE ID=$1 RETURNING *', [ gameID ])).rows[0];
-                io.emit('set-game', game);
+                io.in(gameID).emit('set-game', game);
             }
         }
         const players = (await db.query('SELECT * FROM players WHERE GAME_ID=$1', [ gameID ])).rows;
         socket.emit('set-game', null);
         socket.emit('set-players', null);
-        io.emit('set-players', players);
+        io.in(gameID).emit('set-players', players);
     } catch(err) {
         console.log(err);
     }
 }
 
 io.on('connection', (socket) => {
-    console.log('connection');
+    socket.emit('set-game', null);
+    socket.emit('set-players', null);
     socket.on('create', async (name) => {
         try {
             let gameID;
             // create game
             while (true) {
                 // make sure game ID is unique
-                gameID = randomize('A0', 3);
+                gameID = randomize('A0', 3)
                 const count = parseInt((await db.query('SELECT COUNT(*) FROM games WHERE ID=$1', [ gameID ])).rows[0].count);
                 if (count !== 0) {
                     continue;
@@ -87,9 +88,9 @@ io.on('connection', (socket) => {
             const players = (await db.query(`INSERT INTO players (NAME, SOCKET_ID, IS_RUNNER, IS_HOSTING, GAME_ID) 
                                                 VALUES ($1, $2, TRUE, TRUE, $3) RETURNING *`, 
                                                 [ name, socket.id, gameID ])).rows;
-            socket.join(gameID);
             socket.emit('set-players', players);
-            io.emit('set-game', game);
+            socket.emit('set-game', game);
+            socket.join('hey');
         } catch (err) {
             console.log(err);
         }
@@ -106,9 +107,9 @@ io.on('connection', (socket) => {
                                                         [ name, socket.id, gameID ])).rows;
                 const players = (await db.query('SELECT * FROM players WHERE GAME_ID=$1', [ gameID ])).rows;
                 socket.join(gameID);
-                io.emit('set-game', gameRows[0]);
+                io.in(gameID).emit('set-game', gameRows[0]);
                 //socket.emit('set-game', gameRows[0]);
-                io.emit('set-players', players);
+                io.in(gameID).emit('set-players', players);
             }
         } catch(err) {
             console.log(err);
@@ -120,7 +121,7 @@ io.on('connection', (socket) => {
             await db.query('UPDATE players SET IS_RUNNER=FALSE WHERE GAME_ID=$1', [ gameID ]);
             await db.query('UPDATE players SET IS_RUNNER=TRUE WHERE ID=$1', [ playerID ]);
             const playersArray = (await db.query('SELECT * from players WHERE GAME_ID=$1', [ gameID ])).rows;
-            io.emit('set-players', playersArray);
+            io.in(gameID).emit('set-players', playersArray);
         }
         catch(err) {
             console.log(err);
@@ -131,7 +132,7 @@ io.on('connection', (socket) => {
         try {
             const game = (await db.query(`UPDATE games SET (ROUND_NUMBER, HAS_STARTED, RUNNER_BEEN_FOUND, LOCATION_UPDATE_NUMBER)=(ROUND_NUMBER+1, TRUE, FALSE, 0) 
                                                 WHERE ID=$1 RETURNING *`, [ gameID ])).rows[0];
-            io.emit('set-game', game);
+            io.in(gameID).emit('set-game', game);
             setTimeout(() => getRunnerLocation(socket, gameID, game.round_number), game.location_update_interval * 1000);
         } catch(err) {
             console.log(err);
@@ -143,7 +144,7 @@ io.on('connection', (socket) => {
             const game = (await db.query('SELECT * FROM games WHERE ID=$1', [ gameID ])).rows[0];
             if (game.runner_been_found) {
                 // send location to other players
-                io.emit('set-runner-location', location);
+                io.in(gameID).emit('set-runner-location', location);
             } else {
                 await db.query('UPDATE games SET (RUNNER_LAST_LATITUDE, RUNNER_LAST_LONGITUDE)=($1, $2) WHERE ID=$3', 
                                     [ location.latitude, location.longitude, game.id ]);
@@ -155,14 +156,14 @@ io.on('connection', (socket) => {
 
     socket.on('runner-found', async (gameID) => {
         const game = (await db.query('UPDATE games SET RUNNER_BEEN_FOUND=TRUE WHERE ID=$1 RETURNING *', [ gameID ])).rows[0];
-        io.emit('set-game', game);
+        io.in(gameID).emit('set-game', game);
         // send runner location to other players
-        socket.broadcast.emit('set-runner-location', { latitude: game.runner_last_latitude, longitude: game.runner_last_longitude });
+        socket.broadcast.to(gameID).emit('set-runner-location', { latitude: game.runner_last_latitude, longitude: game.runner_last_longitude });
     });
 
     socket.on('end-game', async (gameID) => {
         const game = (await db.query('UPDATE games SET HAS_STARTED=FALSE WHERE ID=$1 RETURNING *', [ gameID ])).rows[0];
-        io.emit('set-game', game);
+        io.in(gameID).emit('set-game', game);
     });
 
     socket.on('leave', async (playerID) => {
