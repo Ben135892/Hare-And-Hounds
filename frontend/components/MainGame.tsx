@@ -18,8 +18,8 @@ interface Props {
 let gameID: string | null = null;
 const LOCATION_TRACKING = 'location-tracking';
 
-const watchLocation = async () => {
-    await Location.startLocationUpdatesAsync(LOCATION_TRACKING, {
+const watchLocation = () => {
+    Location.startLocationUpdatesAsync(LOCATION_TRACKING, {
         accuracy: Location.Accuracy.Highest,
         timeInterval: 3000,
         distanceInterval: 0,

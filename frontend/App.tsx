@@ -17,6 +17,7 @@ const Stack = createNativeStackNavigator();
 export default function App() {
   const [game, setGame] = useState<Game | null>(null);
   const [players, setPlayers] = useState<Players | null>(null);
+  const [connected, setConnected] = useState(true);
   useEffect(() => {
     (async () => {
         await Location.requestForegroundPermissionsAsync();
@@ -27,8 +28,22 @@ export default function App() {
     socket.on('set-players', (players: Players) => {
       setPlayers(players);
     });
+    socket.on('connect', () => {
+      setConnected(true);
+    });
+    socket.on('disconnect', () => {
+      setConnected(false);
+      setGame(null);
+      setPlayers(null);
+    });
   }, []);
-  if (game && players) {
+  if (!connected) {
+    return (
+      <View>
+        <Text>No Connection</Text>
+      </View>
+    )
+  } else if (game && players) {
     if (game.has_started) {
       return <MainGame game={game} players={players} />
     } else {
@@ -55,3 +70,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+

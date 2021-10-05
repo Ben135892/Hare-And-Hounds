@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, Button } from 'react-native';
 import StartButton from './StartButton';
+import PlayerList from './PlayerList';
 import Game from '../interfaces/Game';
 import Player from '../interfaces/Player';
 import Players from '../types/Players';
@@ -16,9 +17,7 @@ const Lobby: React.FC<Props> = ({ game, players }) => {
     return (
         <View style={styles.lobby}>
             <Text>Game ID: {game.id}</Text>
-            {players.map((player) => (
-                <Text key={player.id}>{player.name}</Text>
-            ))}
+            <PlayerList players={players} />
             {player.is_hosting && <StartButton gameID={game.id} />}
             <Button title='Leave' onPress={() => socket.emit('leave', player.id)} />
         </View>

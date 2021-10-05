@@ -29,7 +29,7 @@ const Direction: React.FC<Props> = ({ runnerLocation }) => {
         }
         const targetBearing = getGreatCircleBearing(location, runnerLocation);
         const newDirection = angleDifference(heading, targetBearing);
-        setDirection(newDirection);
+        setDirection(Math.round(newDirection));
     } 
     const updateDistance = () => {
         if (location === null) {
@@ -44,10 +44,6 @@ const Direction: React.FC<Props> = ({ runnerLocation }) => {
     const updateHeading = (headingObj: any) => {
         setHeading(headingObj.trueHeading); // true north
     }
-    useEffect(() => updateDistance(),
-        [location]);
-    useEffect(() => updateDirection(),
-        [location, heading]);
     useEffect(() => {
         (async () => {
             const locationSubscription = await Location.watchPositionAsync(GEOLOCATION_OPTIONS, updateLocation);
@@ -62,6 +58,16 @@ const Direction: React.FC<Props> = ({ runnerLocation }) => {
     useEffect(() => {
         return () => headingSubscription && headingSubscription.remove();
     }, [headingSubscription]);
+    useEffect(() => {
+        updateDistance()
+    }, [location]);
+    useEffect(() => {
+        updateDirection()
+    }, [location, heading]);
+    useEffect(() => {
+        updateDistance();
+        updateDirection();
+    }, [runnerLocation])
     return (
         <View style={styles.direction}>
             {direction !== null && 

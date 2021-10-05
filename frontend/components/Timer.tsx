@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import socket from '../socketConfig';
 import Game from '../interfaces/Game';
 
 interface Props {
