@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, Dimensions, Button } from 'react-native';
+import { StyleSheet, Text, View, Dimensions } from 'react-native';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
+import Button from './Button'
 import Direction from './Direction';
 import Timer from './Timer';
 import Game from '../interfaces/Game';
@@ -9,6 +10,7 @@ import Player from '../interfaces/Player';
 import LocationType from '../interfaces/Location';
 import Players from '../types/Players';
 import socket from '../socketConfig';
+import globalStyles from '../styles/globalStyles';
 
 interface Props {
     game: Game,
@@ -48,7 +50,7 @@ const MainGame: React.FC<Props> = ({ game, players }) => {
         if (player.is_runner) {
             watchLocation();
         } 
-        socket.on('set-runner-location', async (runnerLocation: LocationType) => {
+        socket.on('set-runner-location', (runnerLocation: LocationType) => {
             setRunnerLocation(runnerLocation);
         });
         return () => {
@@ -73,14 +75,14 @@ const MainGame: React.FC<Props> = ({ game, players }) => {
     return (
         <View style={styles.container}>
             {!game.runner_been_found &&
-                <Text>
+                <Text style={globalStyles.text}>
                     Next Location Update: <Timer game={game} time={game.location_update_interval} />
                 </Text>}
             {!game.runner_been_found && runnerLocation && 
-                <Text>
+                <Text style={globalStyles.text}>
                     Showing Location for: <Timer game={game} time={game.location_show_time} />
                 </Text>}
-            {game.runner_been_found && <Text>Runner has been found! Showing direction back to runner</Text>}
+            {game.runner_been_found && <Text style={globalStyles.text}>Showing direction back to runner!</Text>}
             {!player.is_runner && runnerLocation && <Direction runnerLocation={runnerLocation} />}
             {player.is_runner && !beenFoundPressed && (
                 <Button title='End Game' onPress={beenFoundHandler} />
@@ -88,16 +90,9 @@ const MainGame: React.FC<Props> = ({ game, players }) => {
             {player.is_runner && game.runner_been_found && !gameOverPressed && (
                 <Button title='Back to Lobby' onPress={gameOverHandler} />
             )}
-                
         </View>
     )    
 }
-
-const styles = StyleSheet.create({
-    container: {
-        marginTop: 40
-    },
-});
 
 TaskManager.defineTask(LOCATION_TRACKING, async ({ data, error }: { data: any, error: any }) => {
     if (error) {
@@ -110,5 +105,13 @@ TaskManager.defineTask(LOCATION_TRACKING, async ({ data, error }: { data: any, e
         socket.emit('update-runner-location', { location, gameID });
     }
 });   
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        marginTop: 40,
+        alignItems: 'center'
+    },
+});
 
 export default MainGame;

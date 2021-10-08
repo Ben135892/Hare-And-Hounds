@@ -11,6 +11,7 @@ import MainGame from './components/MainGame';
 import Game from './interfaces/Game';
 import Players from './types/Players';
 import socket from './socketConfig';
+import globalStyles from './styles/globalStyles';
 
 const Stack = createNativeStackNavigator();
 
@@ -39,8 +40,8 @@ export default function App() {
   }, []);
   if (!connected) {
     return (
-      <View>
-        <Text>No Connection</Text>
+      <View style={styles.errorContainer}>
+        <Text style={[globalStyles.error, globalStyles.text]}>No Connection</Text>
       </View>
     )
   } else if (game && players) {
@@ -63,9 +64,8 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  errorContainer: {
     flex: 1,
-    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
   },

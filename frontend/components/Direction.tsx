@@ -3,6 +3,8 @@ import { StyleSheet, Text, View, Image } from 'react-native'
 import * as Location from 'expo-location';
 import { getDistance, getGreatCircleBearing } from 'geolib';
 import LocationType from '../interfaces/Location';
+import globalStyles from '../styles/globalStyles';
+import { AntDesign } from '@expo/vector-icons'; 
 
 interface Props {
     runnerLocation: LocationType
@@ -67,27 +69,26 @@ const Direction: React.FC<Props> = ({ runnerLocation }) => {
     useEffect(() => {
         updateDistance();
         updateDirection();
-    }, [runnerLocation])
+    }, [runnerLocation]);
     return (
-        <View style={styles.direction}>
+        <View style={styles.container}>
+            {distance !== null && <Text style={[globalStyles.text]}>Distance: <Text style={globalStyles.bold}>{distance}</Text></Text>}  
             {direction !== null && 
-                <Image 
-                    style={[styles.image, {transform: [{ rotate: direction + 'deg' }] }]} 
-                    source={require('../assets/arrow.png')} 
-                />
-            } 
-            {distance !== null && <Text>Distance: {distance}</Text>}  
+                <View style={[{ transform: [{ rotate: direction + 'deg' }], position: 'absolute' }, styles.arrow]}>  
+                    <AntDesign name="upcircle"  size={200}  color="black" />
+                </View>
+            }
         </View>
     )
 }
 
 const styles = StyleSheet.create({
-    image: {
-        width: 150,
-        height: 150
+    container: {
+        marginTop: 50,
+        alignItems: 'center'
     },
-    direction: {
-        margin: 50
+    arrow: {
+        marginTop: 30
     }
 })
 
