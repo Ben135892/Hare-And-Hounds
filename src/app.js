@@ -11,7 +11,11 @@ http.listen(port, () => console.log('listening on port ' + port));
 const locationUpdateInterval = 15; 
 const locationShowTime = 10; 
 
-const getRunnerLocation = async (socket, gameID, roundNumber) => {
+const getPlayers = async (gameID) => {
+    return (await db.query('SELECT * FROM players WHERE GAME_ID=$1 ORDER BY ID ASC', [ gameID ])).rows;
+} 
+
+const getRunnerLocation = async (gameID, roundNumber) => {
     try {
         const gameRows = (await db.query('SELECT * FROM games WHERE ID=$1', [ gameID ])).rows;
         if (gameRows.length === 0) { // game doesn't exist anymore
@@ -21,10 +25,10 @@ const getRunnerLocation = async (socket, gameID, roundNumber) => {
         if (!game.has_started || game.runner_been_found || game.round_number !== roundNumber) {
             return;
         }
-        socket.broadcast.to(gameID).emit('set-runner-location', { latitude: game.runner_last_latitude, longitude: game.runner_last_longitude });
+        io.in(gameID).emit('set-runner-location', { latitude: game.runner_last_latitude, longitude: game.runner_last_longitude });
         game = (await db.query('UPDATE games SET LOCATION_UPDATE_NUMBER=LOCATION_UPDATE_NUMBER+1 WHERE ID=$1 RETURNING *', [ gameID ])).rows[0];
         io.in(gameID).emit('set-game', game);
-        setTimeout(() => getRunnerLocation(socket, gameID, roundNumber), game.location_update_interval * 1000);
+        setTimeout(() => getRunnerLocation(gameID, roundNumber), game.location_update_interval * 1000);
         setTimeout(() => io.in(gameID).emit('remove-runner-location'), game.location_show_time * 1000);
     } catch(err) {
         console.log(err);
@@ -54,8 +58,7 @@ const leaveGame = async (socket, player) => {
                 io.in(gameID).emit('set-game', game);
             }
         }
-        const players = (await db.query('SELECT * FROM players WHERE GAME_ID=$1', [ gameID ])).rows;
-        io.in(gameID).emit('set-players', players);
+        io.in(gameID).emit('set-players', await getPlayers(gameID));
     } catch(err) {
         console.log(err);
     }
@@ -97,13 +100,18 @@ io.on('connection', (socket) => {
             const gameRows = (await db.query('SELECT * FROM games WHERE ID=$1', [ gameID ])).rows;
             if (gameRows.length === 0) {
                 // room doesn't exist
+                socket.emit('join-error', 'Error: Invalid ID');
             } else {
+                const game = gameRows[0];
+                if (game.has_started) {
+                    socket.emit('join-error', 'Error: Game has already started');
+                }
                 (await db.query(`INSERT INTO players (NAME, SOCKET_ID, IS_RUNNER, IS_HOSTING, GAME_ID) 
                                                         VALUES ($1, $2, FALSE, FALSE, $3)`, 
                                                         [ name, socket.id, gameID ])).rows;
-                const players = (await db.query('SELECT * FROM players WHERE GAME_ID=$1', [ gameID ])).rows;
+                const players = await getPlayers(gameID);
                 socket.join(gameID);
-                io.in(gameID).emit('set-game', gameRows[0]);
+                io.in(gameID).emit('set-game', game);
                 io.in(gameID).emit('set-players', players);
             }
         } catch(err) {
@@ -115,8 +123,7 @@ io.on('connection', (socket) => {
         try {
             await db.query('UPDATE players SET IS_RUNNER=FALSE WHERE GAME_ID=$1', [ gameID ]);
             await db.query('UPDATE players SET IS_RUNNER=TRUE WHERE ID=$1', [ playerID ]);
-            const playersArray = (await db.query('SELECT * from players WHERE GAME_ID=$1', [ gameID ])).rows;
-            io.in(gameID).emit('set-players', playersArray);
+            io.in(gameID).emit('set-players', await getPlayers(gameID));
         }
         catch(err) {
             console.log(err);
@@ -129,7 +136,7 @@ io.on('connection', (socket) => {
                                                 WHERE ID=$1 RETURNING *`, [ gameID ])).rows[0];
             
             io.in(gameID).emit('set-game', game);
-            setTimeout(() => getRunnerLocation(socket, gameID, game.round_number), game.location_update_interval * 1000);
+            setTimeout(() => getRunnerLocation(gameID, game.round_number), game.location_update_interval * 1000);
         } catch(err) {
             console.log(err);
         }

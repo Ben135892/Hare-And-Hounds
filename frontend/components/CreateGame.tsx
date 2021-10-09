@@ -12,13 +12,17 @@ const CreateGame: React.FC = () => {
         socket.emit('create', name);
     }
     return (
-        <View>
+        <View style={styles.container}>
             <TextInput style={globalStyles.input} onChangeText={(text) => setName(text)} placeholder='Name' />
             {!pressed && <Button title='Create' onPress={createHandler} />}
         </View>
     )
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+    container: {
+        alignItems: 'center'
+    }
+});
 
 export default CreateGame;

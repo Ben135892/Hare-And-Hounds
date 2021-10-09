@@ -72,7 +72,7 @@ const Direction: React.FC<Props> = ({ runnerLocation }) => {
     }, [runnerLocation]);
     return (
         <View style={styles.container}>
-            {distance !== null && <Text style={[globalStyles.text]}>Distance: <Text style={globalStyles.bold}>{distance}</Text></Text>}  
+            {distance !== null && <Text style={[globalStyles.text]}>Distance: <Text style={globalStyles.bold}>{distance < 10 ? '<10m' : distance + 'm'}</Text></Text>}  
             {direction !== null && 
                 <View style={[{ transform: [{ rotate: direction + 'deg' }], position: 'absolute' }, styles.arrow]}>  
                     <AntDesign name="upcircle"  size={200}  color="black" />
@@ -85,10 +85,10 @@ const Direction: React.FC<Props> = ({ runnerLocation }) => {
 const styles = StyleSheet.create({
     container: {
         marginTop: 50,
-        alignItems: 'center'
+        alignItems: 'center',
     },
     arrow: {
-        marginTop: 30
+        marginTop: 40
     }
 })
 

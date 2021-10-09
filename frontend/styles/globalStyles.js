@@ -16,14 +16,11 @@ export default StyleSheet.create({
     error: {
         color: 'red'
     },
-    button: {
-        margin: 10,
-        padding: 5
-    },
     input: {
         margin: 30,
         fontWeight: 'bold',
         fontSize: 20,
-        marginBottom: 0
+        marginBottom: 0,
+        padding: 10
     }
 });

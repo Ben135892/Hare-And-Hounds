@@ -8,13 +8,17 @@ type Props = NativeStackScreenProps<NavigatorParamsList, 'Menu'>;
 
 const GameMenu: React.FC<Props> = ({ navigation }) => {
     return (
-        <View>
+        <View style={styles.container}>
             <Button title='Create Game' onPress={() => navigation.navigate('Create')} />
             <Button title='Join Game' onPress={() => navigation.navigate('Join')} />
         </View>
     );
 }
 
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({
+    container: {
+        alignItems: 'center'
+    }
+})
 
 export default GameMenu;
