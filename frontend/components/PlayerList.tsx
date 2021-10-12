@@ -18,7 +18,6 @@ const PlayerList: React.FC<Props> = ({ players, isHosting, gameID }) => {
             <ScrollView>
                 <View style={styles.list}>
                     {players.map((player: Player) => {
-                        console.log(player.id);
                         itemNumber++;
                         return isHosting ? (
                             <TouchableOpacity key={player.id} onPress={() => socket.emit('change-runner', { playerID: player.id, gameID })}>

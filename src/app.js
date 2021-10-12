@@ -8,8 +8,9 @@ const io = require('socket.io')(http);
 http.listen(port, () => console.log('listening on port ' + port));
 
 // in seconds
-const locationUpdateInterval = 15; 
+const locationUpdateInterval = 12; 
 const locationShowTime = 10; 
+const nameLength = 20; // DATABASE NAME IS VARCHAR(20)
 
 const getPlayers = async (gameID) => {
     return (await db.query('SELECT * FROM players WHERE GAME_ID=$1 ORDER BY ID ASC', [ gameID ])).rows;
@@ -68,20 +69,23 @@ io.on('connection', (socket) => {
     console.log('connection');
     socket.on('create', async (name) => {
         try {
+            if (name.length > nameLength) {
+                name = name.substring(0, nameLength); 
+            }
             let gameID;
             // create game
             while (true) {
                 // make sure game ID is unique
-                gameID = randomize('A0', 3);
+                gameID = randomize('A0', 6);
                 const count = parseInt((await db.query('SELECT COUNT(*) FROM games WHERE ID=$1', [ gameID ])).rows[0].count);
                 if (count !== 0) {
                     continue;
                 }
                 break;
             }
-            const game = (await db.query(`INSERT INTO games (ID, HAS_STARTED, RUNNER_BEEN_FOUND, ROUND_NUMBER, 
+            const game = (await db.query(`INSERT INTO games (ID, HAS_STARTED, RUNNER_BEEN_FOUND, ROUND_NUMBER, LOCATION_UPDATE_NUMBER,
                                             LOCATION_UPDATE_INTERVAL, LOCATION_SHOW_TIME, RUNNER_LAST_LATITUDE, RUNNER_LAST_LONGITUDE) 
-                                            VALUES ($1, FALSE, FALSE, 0, $2, $3, 0, 0) RETURNING *`, 
+                                            VALUES ($1, FALSE, FALSE, 0, 0, $2, $3, 0, 0) RETURNING *`, 
                                             [ gameID, locationUpdateInterval, locationShowTime ])).rows[0];
             // create player
             const players = (await db.query(`INSERT INTO players (NAME, SOCKET_ID, IS_RUNNER, IS_HOSTING, GAME_ID) 
@@ -97,6 +101,9 @@ io.on('connection', (socket) => {
 
     socket.on('join', async ({ name, gameID }) => {
         try {
+            if (name.length > nameLength) {
+                name = name.substring(0, nameLength);
+            }
             const gameRows = (await db.query('SELECT * FROM games WHERE ID=$1', [ gameID ])).rows;
             if (gameRows.length === 0) {
                 // room doesn't exist
@@ -105,6 +112,7 @@ io.on('connection', (socket) => {
                 const game = gameRows[0];
                 if (game.has_started) {
                     socket.emit('join-error', 'Error: Game has already started');
+                    return;
                 }
                 (await db.query(`INSERT INTO players (NAME, SOCKET_ID, IS_RUNNER, IS_HOSTING, GAME_ID) 
                                                         VALUES ($1, $2, FALSE, FALSE, $3)`, 

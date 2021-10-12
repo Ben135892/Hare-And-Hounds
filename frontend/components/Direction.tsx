@@ -10,7 +10,7 @@ interface Props {
     runnerLocation: LocationType
 }
 
-const GEOLOCATION_OPTIONS = { accuracy: Location.LocationAccuracy.Highest, timeInterval: 2000, distanceInterval: 0 };
+const GEOLOCATION_OPTIONS = { accuracy: Location.LocationAccuracy.Highest, timeInterval: 2500, distanceInterval: 0 };
 
 // return the bearing angle between a current and target bearing
 const angleDifference = (heading: number, targetBearing: number) => {

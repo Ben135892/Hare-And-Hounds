@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, Dimensions, Vibration } from 'react-native';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import Button from './Button'
@@ -17,23 +17,26 @@ interface Props {
     players: Players
 }
 
+let is_runner: Boolean | null = null;
 let gameID: string | null = null;
 const LOCATION_TRACKING = 'location-tracking';
 
-const watchLocation = () => {
+const watchLocation = (is_runner: Boolean) => {
     Location.startLocationUpdatesAsync(LOCATION_TRACKING, {
         accuracy: Location.Accuracy.Highest,
-        timeInterval: 3000,
+        timeInterval: is_runner ? 2500 : 9999999999, 
         distanceInterval: 0,
+        pausesUpdatesAutomatically: true, // for ios
         foregroundService: {
-            notificationTitle: 'Using your location',
-            notificationBody: 'Needed by App to track location in background'
+            notificationTitle: 'Running Foreground Service',
+            notificationBody: 'Needed by App for Background Updates'
         }
     });
 }
 
 const MainGame: React.FC<Props> = ({ game, players }) => {
     const player: Player = players.find(player => player.socket_id === socket.id)!;
+    const runner: Player = players.find(player => player.is_runner)!;
     const [runnerLocation, setRunnerLocation] = useState<LocationType | null>(null);
     const [beenFoundPressed, setBeenFoundPressed] = useState(false);
     const [gameOverPressed, setGameOverPressed] = useState(false);
@@ -46,24 +49,21 @@ const MainGame: React.FC<Props> = ({ game, players }) => {
         setGameOverPressed(true);
     }
     useEffect(() => {
+        is_runner = player.is_runner;
         gameID = game.id;
-        if (player.is_runner) {
-            watchLocation();
-        } 
+        watchLocation(player.is_runner);
         socket.on('set-runner-location', (runnerLocation: LocationType) => {
             setRunnerLocation(runnerLocation);
         });
         return () => {
-            if (player.is_runner) {
-                (async () => {
-                    if (await Location.hasStartedLocationUpdatesAsync(LOCATION_TRACKING)) {
-                        await Location.stopLocationUpdatesAsync(LOCATION_TRACKING);
-                    }
-                })();
-            }
+            (async () => {
+                if (await Location.hasStartedLocationUpdatesAsync(LOCATION_TRACKING)) {
+                    await Location.stopLocationUpdatesAsync(LOCATION_TRACKING);
+                }
+            })();
             socket.off('set-runner-location');
         }
-    }, []);
+    }, [player.is_runner]);
     useEffect(() => {
         socket.on('remove-runner-location', () => {
             if (!game.runner_been_found) {
@@ -72,15 +72,22 @@ const MainGame: React.FC<Props> = ({ game, players }) => {
         });
         return () => socket.off('remove-runner-location');
     }, [game.runner_been_found]);
+    useEffect(() => {
+        if (game.location_update_number > 0) {
+            Vibration.vibrate(500);
+        }
+    }, [game.location_update_number]);
     return (
         <View style={styles.container}>
-            {!game.runner_been_found &&
+            <Text style={globalStyles.text}>{ player.is_runner ? 'You are the runner' : 'Runner: ' + runner.name }</Text>
+            {!game.runner_been_found && !runnerLocation && 
                 <Text style={globalStyles.text}>
-                    Next Location Update: <Timer game={game} time={game.location_update_interval} />
+                    Next Location Update: <Timer time={game.location_update_number === 0 ? game.location_update_interval 
+                                                                                        : game.location_update_interval - game.location_show_time} />
                 </Text>}
             {!game.runner_been_found && runnerLocation && 
                 <Text style={globalStyles.text}>
-                    Showing Location for: <Timer game={game} time={game.location_show_time} />
+                    Showing Location for: <Timer time={game.location_show_time} />
                 </Text>}
             {game.runner_been_found && <Text style={globalStyles.text}>Showing direction back to runner!</Text>}
             {!player.is_runner && runnerLocation && <Direction runnerLocation={runnerLocation} />}
@@ -99,9 +106,10 @@ TaskManager.defineTask(LOCATION_TRACKING, async ({ data, error }: { data: any, e
         console.log('LOCATION_TRACKING TASK ERROR: ', error);
         return;
     }
-    if (data && gameID !== null) {
+    if (data && gameID !== null && is_runner) {
         const { locations } = data;
         const location = { latitude: locations[0].coords.latitude, longitude: locations[0].coords.longitude };
+        console.log(location);
         socket.emit('update-runner-location', { location, gameID });
     }
 });   

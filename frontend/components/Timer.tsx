@@ -4,23 +4,28 @@ import Game from '../interfaces/Game';
 import globalStyles from '../styles/globalStyles'
 
 interface Props {
-    game: Game,
     time: number
 }
 
-const Timer: React.FC<Props> = ({ game, time }) => {
+const Timer: React.FC<Props> = ({ time }) => {
     const appState = useRef(AppState.currentState);
     const [timer, setTimer] = useState<number>(time);
-    const [startTime, setStartTime] = useState<number | null>(new Date().getTime());
+    const [startTime, setStartTime] = useState<number>(new Date().getTime());
+    const getTimerValue = () => {
+        const timeDiff = (new Date().getTime() - startTime) / 1000;
+        setTimer(time - timeDiff);
+    }
     const _handleAppStateChange = (nextAppState: AppStateStatus) => {
         if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
             // app been opened in foreground
-            if (startTime !== null) {
-                const timeDiff = (new Date().getTime() - startTime) / 1000;
-                setTimer(time - timeDiff);
-            }
+            getTimerValue();
         } 
         appState.current = nextAppState;
+    }
+    const formatTime = (timer: number) => {
+        const minutes = Math.floor(timer / 60);
+        let seconds = timer % 60;
+        return (minutes > 0 ? minutes + ':' : '') + (minutes > 0 && seconds < 10 ? '0' + seconds : seconds);
     }
     useEffect(() => {
         AppState.addEventListener('change', _handleAppStateChange);
@@ -29,17 +34,14 @@ const Timer: React.FC<Props> = ({ game, time }) => {
         };
     });
     useEffect(() => {
+        setStartTime(new Date().getTime());
         const interval = setInterval(() => {
-            setTimer(timer => timer - 0.1);
+            getTimerValue();
         }, 100);
         return () => clearInterval(interval);
-    }, [game.location_update_number, appState.current]);
-    useEffect(() => {
-        setTimer(time);
-        setStartTime(new Date().getTime());
-    }, [game.location_update_number]);
+    }, []);
     return (
-        <Text style={globalStyles.bold}>{ Math.ceil(timer) }</Text>
+        <Text style={globalStyles.bold}>{ formatTime(Math.ceil(timer)) }</Text>
     );
 }
 
