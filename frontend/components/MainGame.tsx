@@ -24,7 +24,7 @@ const LOCATION_TRACKING = 'location-tracking';
 const watchLocation = (is_runner: Boolean) => {
     Location.startLocationUpdatesAsync(LOCATION_TRACKING, {
         accuracy: Location.Accuracy.Highest,
-        timeInterval: is_runner ? 2500 : 9999999999, 
+        timeInterval: is_runner ? 2000 : 9999999999, 
         distanceInterval: 0,
         pausesUpdatesAutomatically: true, // for ios
         foregroundService: {
@@ -74,7 +74,7 @@ const MainGame: React.FC<Props> = ({ game, players }) => {
     }, [game.runner_been_found]);
     useEffect(() => {
         if (game.location_update_number > 0) {
-            Vibration.vibrate(500);
+            //Vibration.vibrate(500);
         }
     }, [game.location_update_number]);
     return (

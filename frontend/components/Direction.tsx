@@ -10,7 +10,7 @@ interface Props {
     runnerLocation: LocationType
 }
 
-const GEOLOCATION_OPTIONS = { accuracy: Location.LocationAccuracy.Highest, timeInterval: 2500, distanceInterval: 0 };
+const GEOLOCATION_OPTIONS = { accuracy: Location.LocationAccuracy.Highest, timeInterval: 1000, distanceInterval: 0 };
 
 // return the bearing angle between a current and target bearing
 const angleDifference = (heading: number, targetBearing: number) => {
@@ -41,6 +41,7 @@ const Direction: React.FC<Props> = ({ runnerLocation }) => {
         setDistance(distance);
     }
     const updateLocation = (location: any) => {
+        console.log(location.coords.accuracy);
         setLocation({ latitude: location.coords.latitude, longitude: location.coords.longitude });
     }
     const updateHeading = (headingObj: any) => {
