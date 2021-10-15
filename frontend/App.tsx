@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { AppState, AppStateStatus, StyleSheet, Text, View, BackHandler  } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { AppState, AppStateStatus, StyleSheet, Text, View  } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
@@ -16,29 +16,20 @@ import globalStyles from './styles/globalStyles';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
-  const appState = useRef(AppState.currentState);
   const [game, setGame] = useState<Game | null>(null);
   const [players, setPlayers] = useState<Players | null>(null);
   const [connected, setConnected] = useState(true);
   const requestPermissions = async () => {
     // request location permissions for app
     const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status === 'granted') {
-      try { 
-        await Location.enableNetworkProviderAsync();
-      } catch(err) {
-        BackHandler.exitApp();
-      }
-    } else {
-      BackHandler.exitApp();
-    }
-  }
-  const _handleAppStateChange = async (nextAppState: AppStateStatus) => {
-    if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
-        // app been opened in foreground
-        await requestPermissions();
+    if (status !== 'granted') {
+      
     } 
-    appState.current = nextAppState;
+    try {
+      await Location.enableNetworkProviderAsync();
+    } catch (error) {
+      
+    };
   }
   useEffect(() => {
     requestPermissions();
@@ -56,10 +47,6 @@ export default function App() {
       setGame(null);
       setPlayers(null);
     });
-    AppState.addEventListener('change', _handleAppStateChange);
-    return () => {
-        AppState.removeEventListener('change', _handleAppStateChange);
-    };
   }, []);
   if (!connected) {
     return (

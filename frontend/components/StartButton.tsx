@@ -4,14 +4,15 @@ import Button from './Button';
 import socket from '../socketConfig';
 
 interface Props {
-    gameID: string
+    gameID: string,
+    locationUpdateInterval: number
 }
 
-const StartButton: React.FC<Props> = ({ gameID }) => {
+const StartButton: React.FC<Props> = ({ gameID, locationUpdateInterval }) => {
     const [pressed, setPressed] = useState(false);
     const pressHandler = () => {
         setPressed(true);
-        socket.emit('start', gameID);
+        socket.emit('start', { gameID, locationUpdateInterval });
     }
     return (
         <View>

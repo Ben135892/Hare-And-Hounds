@@ -8,8 +8,8 @@ const io = require('socket.io')(http);
 http.listen(port, () => console.log('listening on port ' + port));
 
 // in seconds
-const locationUpdateInterval = 12; 
-const locationShowTime = 10; 
+const LOCATION_UPDATE_INTERVAL = 180;
+const LOCATION_SHOW_TIME = 10; 
 const nameLength = 20; // DATABASE NAME IS VARCHAR(20)
 
 const getPlayers = async (gameID) => {
@@ -86,7 +86,7 @@ io.on('connection', (socket) => {
             const game = (await db.query(`INSERT INTO games (ID, HAS_STARTED, RUNNER_BEEN_FOUND, ROUND_NUMBER, LOCATION_UPDATE_NUMBER,
                                             LOCATION_UPDATE_INTERVAL, LOCATION_SHOW_TIME, RUNNER_LAST_LATITUDE, RUNNER_LAST_LONGITUDE) 
                                             VALUES ($1, FALSE, FALSE, 0, 0, $2, $3, 0, 0) RETURNING *`, 
-                                            [ gameID, locationUpdateInterval, locationShowTime ])).rows[0];
+                                            [ gameID, LOCATION_UPDATE_INTERVAL, LOCATION_SHOW_TIME ])).rows[0];
             // create player
             const players = (await db.query(`INSERT INTO players (NAME, SOCKET_ID, IS_RUNNER, IS_HOSTING, GAME_ID) 
                                                 VALUES ($1, $2, TRUE, TRUE, $3) RETURNING * `, 
@@ -138,11 +138,10 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('start', async (gameID) => {
+    socket.on('start', async ({ gameID, locationUpdateInterval }) => {
         try {
-            const game = (await db.query(`UPDATE games SET (ROUND_NUMBER, HAS_STARTED, RUNNER_BEEN_FOUND, LOCATION_UPDATE_NUMBER)=(ROUND_NUMBER+1, TRUE, FALSE, 0) 
-                                                WHERE ID=$1 RETURNING *`, [ gameID ])).rows[0];
-            
+            const game = (await db.query(`UPDATE games SET (ROUND_NUMBER, HAS_STARTED, RUNNER_BEEN_FOUND, LOCATION_UPDATE_NUMBER, LOCATION_UPDATE_INTERVAL)=
+                                                (ROUND_NUMBER+1, TRUE, FALSE, 0, $1) WHERE ID=$2 RETURNING *`, [ locationUpdateInterval, gameID ])).rows[0];
             io.in(gameID).emit('set-game', game);
             setTimeout(() => getRunnerLocation(gameID, game.round_number), game.location_update_interval * 1000);
         } catch(err) {

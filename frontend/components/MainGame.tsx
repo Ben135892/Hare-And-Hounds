@@ -74,7 +74,7 @@ const MainGame: React.FC<Props> = ({ game, players }) => {
     }, [game.runner_been_found]);
     useEffect(() => {
         if (game.location_update_number > 0) {
-            //Vibration.vibrate(500);
+            //Vibration.vibrate(100);
         }
     }, [game.location_update_number]);
     return (
@@ -108,8 +108,8 @@ TaskManager.defineTask(LOCATION_TRACKING, async ({ data, error }: { data: any, e
     }
     if (data && gameID !== null && is_runner) {
         const { locations } = data;
+        console.log(new Date());
         const location = { latitude: locations[0].coords.latitude, longitude: locations[0].coords.longitude };
-        console.log(location);
         socket.emit('update-runner-location', { location, gameID });
     }
 });   
