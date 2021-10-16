@@ -67,6 +67,10 @@ const leaveGame = async (socket, player) => {
 
 io.on('connection', (socket) => {
     console.log('connection');
+    socket.on('stop-idling', () => {
+        console.log('not idling');
+        // do nothing, makes sure Heroku doesn't sleep.
+    });
     socket.on('create', async (name) => {
         try {
             if (name.length > nameLength) {
