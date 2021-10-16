@@ -43,6 +43,7 @@ export default function App() {
       setConnected(true);
     });
     socket.on('disconnect', () => {
+      console.log('dis')
       setConnected(false);
       setGame(null);
       setPlayers(null);

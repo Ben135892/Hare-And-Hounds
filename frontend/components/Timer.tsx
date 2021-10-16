@@ -24,7 +24,7 @@ const Timer: React.FC<Props> = ({ time }) => {
     }
     const formatTime = (timer: number) => {
         const minutes = Math.floor(timer / 60);
-        let seconds = timer % 60;
+        const seconds = timer % 60;
         return (minutes > 0 ? minutes + ':' : '') + (minutes > 0 && seconds < 10 ? '0' + seconds : seconds);
     }
     useEffect(() => {

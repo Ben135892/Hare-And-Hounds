@@ -2,7 +2,6 @@ const app = require('express');
 const http = require('http').createServer(app);
 const db = require('./db');
 const randomize = require('randomatic');
-require('heroku-self-ping').default('https://hareandhounds.herokuapp.com'); // ping application to stop dyno sleeping with Heroku free plan
 
 const port = process.env.PORT || 3000;
 const io = require('socket.io')(http);
@@ -11,7 +10,11 @@ http.listen(port, () => console.log('listening on port ' + port));
 // in seconds
 const LOCATION_UPDATE_INTERVAL = 180;
 const LOCATION_SHOW_TIME = 10; 
-const nameLength = 20; // DATABASE NAME IS VARCHAR(20)
+const NAME_LENGTH = 20; // NAME IN DB IS VARCHAR(20)
+
+app.get('/', (req, res) => {
+    res.send('Hello World');
+});
 
 const getPlayers = async (gameID) => {
     return (await db.query('SELECT * FROM players WHERE GAME_ID=$1 ORDER BY ID ASC', [ gameID ])).rows;
@@ -70,8 +73,8 @@ io.on('connection', (socket) => {
     console.log('connection');
     socket.on('create', async (name) => {
         try {
-            if (name.length > nameLength) {
-                name = name.substring(0, nameLength); 
+            if (name.length > NAME_LENGTH) {
+                name = name.substring(0, NAME_LENGTH); 
             }
             let gameID;
             // create game
@@ -102,8 +105,8 @@ io.on('connection', (socket) => {
 
     socket.on('join', async ({ name, gameID }) => {
         try {
-            if (name.length > nameLength) {
-                name = name.substring(0, nameLength);
+            if (name.length > NAME_LENGTH) {
+                name = name.substring(0, NAME_LENGTH);
             }
             const gameRows = (await db.query('SELECT * FROM games WHERE ID=$1', [ gameID ])).rows;
             if (gameRows.length === 0) {
