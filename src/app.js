@@ -2,6 +2,7 @@ const app = require('express')();
 const http = require('http').createServer(app);
 const db = require('./db');
 const randomize = require('randomatic');
+require('heroku-self-ping').default('https://hareandhounds.herokuapp.com', { interval: 10 * 1000 });
 
 const port = process.env.PORT || 3000;
 const io = require('socket.io')(http);
