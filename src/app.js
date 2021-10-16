@@ -2,6 +2,7 @@ const app = require('express');
 const http = require('http').createServer(app);
 const db = require('./db');
 const randomize = require('randomatic');
+require('heroku-self-ping').default('https://hareandhounds.herokuapp.com'); // ping application to stop dyno sleeping with Heroku free plan
 
 const port = process.env.PORT || 3000;
 const io = require('socket.io')(http);
@@ -67,10 +68,6 @@ const leaveGame = async (socket, player) => {
 
 io.on('connection', (socket) => {
     console.log('connection');
-    socket.on('stop-idling', () => {
-        console.log('not idling');
-        // do nothing, makes sure Heroku doesn't sleep.
-    });
     socket.on('create', async (name) => {
         try {
             if (name.length > nameLength) {

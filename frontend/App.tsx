@@ -47,9 +47,6 @@ export default function App() {
       setGame(null);
       setPlayers(null);
     });
-    setInterval(() => {
-      socket.emit('stop-idling');
-    });
   }, []);
   if (!connected) {
     return (
