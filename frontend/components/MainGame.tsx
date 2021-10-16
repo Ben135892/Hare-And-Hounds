@@ -110,7 +110,7 @@ TaskManager.defineTask(LOCATION_TRACKING, async ({ data, error }: { data: any, e
         const { locations } = data;
         
         const location = { latitude: locations[0].coords.latitude, longitude: locations[0].coords.longitude };
-        console.log(new Date(), location);
+        console.log(new Date());
         socket.emit('update-runner-location', { location, gameID });
     }
 });   

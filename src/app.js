@@ -191,8 +191,9 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('disconnect', async () => {
+    socket.on('disconnect', async (reason) => {
         try {
+            console.log(reason);
             console.log('disconnect');
             // find player from socket id
             const playerRows = (await db.query('SELECT * FROM players WHERE SOCKET_ID=$1', [ socket.id ])).rows;
