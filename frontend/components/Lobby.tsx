@@ -25,9 +25,10 @@ const Lobby: React.FC<Props> = ({ game, players }) => {
             <Text style={[globalStyles.header, globalStyles.bold]}>Players: </Text>
             <PlayerList players={players} isHosting={player.is_hosting} gameID={game.id} />
             {player.is_hosting && <Text style={globalStyles.text}>Tap on player name to select runner</Text>}
-            <Text style={globalStyles.text}>{ player.is_runner ? 'You are the runner' : 'Runner: ' + runner.name }</Text>
+
+            <Text style={globalStyles.text}>{ player.is_runner ? 'You are the runner' : runner ? 'Runner: ' + runner.name : 'No Runner Selected' }</Text>
             {player.is_hosting && <Slider locationUpdateInterval={locationUpdateInterval} setLocationUpdateInterval={setLocationUpdateInterval} />}
-            {player.is_hosting && <StartButton gameID={game.id} locationUpdateInterval={locationUpdateInterval} />}
+            {runner && player.is_hosting && <StartButton gameID={game.id} locationUpdateInterval={locationUpdateInterval} />}
             <Button title='Leave' onPress={() => socket.emit('leave', player.id)} />
         </View>
     )

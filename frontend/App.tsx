@@ -21,10 +21,8 @@ export default function App() {
   const [connected, setConnected] = useState(true);
   const requestPermissions = async () => {
     // request location permissions for app
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      
-    } 
+    await Location.requestForegroundPermissionsAsync();
+    await Location.requestBackgroundPermissionsAsync();
     try {
       await Location.enableNetworkProviderAsync();
     } catch (error) {
@@ -43,7 +41,6 @@ export default function App() {
       setConnected(true);
     });
     socket.on('disconnect', () => {
-      console.log('dis')
       setConnected(false);
       setGame(null);
       setPlayers(null);

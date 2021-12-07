@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { AppState, AppStateStatus, StyleSheet, Text, View } from 'react-native'
-import Game from '../interfaces/Game';
 import globalStyles from '../styles/globalStyles'
 
 interface Props {

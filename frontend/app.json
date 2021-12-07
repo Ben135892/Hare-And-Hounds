@@ -17,8 +17,9 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true,
       "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "The Beep App uses your location to pick origins, destinations, and predict ride times",
+        "NSLocationAlwaysUsageDescription": "The Beep App will use your location to provide ETA's to yourself and others",
         "UIBackgroundModes": [
           "location",
           "fetch"
