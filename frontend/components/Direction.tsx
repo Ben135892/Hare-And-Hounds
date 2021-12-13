@@ -76,7 +76,7 @@ const Direction: React.FC<Props> = ({ runnerLocation }) => {
             {distance !== null && <Text style={[globalStyles.text]}>Distance: <Text style={globalStyles.bold}>{distance < 10 ? '<10m' : distance + 'm'}</Text></Text>}  
             {direction !== null && 
                 <View style={[{ transform: [{ rotate: direction + 'deg' }], position: 'absolute' }, styles.arrow]}>  
-                    <AntDesign name="upcircle"  size={200}  color="black" />
+                    <AntDesign name="uparrow"  size={200}  color="black" />
                 </View>
             }
         </View>

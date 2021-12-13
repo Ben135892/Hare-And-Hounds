@@ -51,7 +51,6 @@ const leaveGame = async (socket, player) => {
             await db.query('DELETE FROM games WHERE ID=$1', [ gameID ]);
             io.in(gameID).emit('set-game', null);
             io.in(gameID).emit('set-players', null);
-            io.in(gameID).disconnectSockets();
         } else {
             const game = (await db.query('SELECT * FROM games WHERE ID=$1', [ gameID ])).rows[0];
             if (player.is_runner && game.has_started) {
